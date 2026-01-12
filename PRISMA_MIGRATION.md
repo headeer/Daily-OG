@@ -6,9 +6,12 @@ The Prisma schema is already configured for PostgreSQL. No changes needed to `pr
 
 ## Running Migrations on Vercel
 
-Vercel will automatically run migrations during build because:
-- `package.json` has `"build": "prisma generate && prisma migrate deploy && next build"`
-- `postinstall` script runs `prisma generate`
+**IMPORTANT**: Migrations are NOT run automatically during build. You must run them manually after first deployment.
+
+This is because:
+- Database connections during build can fail due to network/firewall issues
+- Connection pooler URLs work better for serverless environments
+- Manual migration gives you control over when migrations run
 
 ## Manual Migration (if needed)
 

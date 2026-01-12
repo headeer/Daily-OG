@@ -57,9 +57,18 @@ In your Vercel project settings, go to **Settings** → **Environment Variables*
 
 #### Required Variables:
 
+**IMPORTANT**: Use the **Connection Pooling** URL, not the direct connection URL.
+
+```
+DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true
+```
+
+Or use the transaction pooler:
 ```
 DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 ```
+
+**DO NOT use** the direct connection URL (`db.[PROJECT].supabase.co:5432`) as it may not work during build.
 
 ```
 NEXTAUTH_URL=https://your-app-name.vercel.app
@@ -85,9 +94,33 @@ NODE_ENV=production
 
 ### 6. Run Database Migrations
 
-Migrations should run automatically during build. If they don't, see [PRISMA_MIGRATION.md](./PRISMA_MIGRATION.md) for manual steps.
+**IMPORTANT**: Migrations should NOT run during build. Run them manually after first deployment.
 
-**Quick Check**: After deployment, verify in Supabase Dashboard → Table Editor that you see:
+**Option A: Using Vercel CLI (Recommended)**
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login
+vercel login
+
+# Link to your project
+vercel link
+
+# Pull environment variables
+vercel env pull .env.production
+
+# Run migrations
+npx prisma migrate deploy
+```
+
+**Option B: Using Supabase SQL Editor**
+1. Go to Supabase Dashboard → SQL Editor
+2. Find your latest migration in `prisma/migrations/[timestamp]_init/migration.sql`
+3. Copy and paste the SQL into the editor
+4. Run the query
+
+**Quick Check**: After running migrations, verify in Supabase Dashboard → Table Editor that you see:
 - `User` table
 - `DayEntry` table  
 - `TimeBlock` table

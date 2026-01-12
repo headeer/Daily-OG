@@ -32,6 +32,7 @@ export function HistoryView({ userId }: { userId: string }) {
 
   useEffect(() => {
     loadHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   async function loadHistory() {

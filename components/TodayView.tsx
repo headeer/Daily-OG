@@ -43,6 +43,7 @@ export function TodayView({ userId }: { userId: string }) {
 
   useEffect(() => {
     loadDay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, userId]);
 
   function getUnfulfilledCount(): number {

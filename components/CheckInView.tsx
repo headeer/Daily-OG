@@ -36,6 +36,7 @@ export function CheckInView({ userId }: { userId: string }) {
     loadToday();
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
@@ -195,6 +196,7 @@ export function CheckInView({ userId }: { userId: string }) {
       loadToday();
     }, 60000); // Reload every minute
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   async function handleUpdatePreviousBlock(blockId: string, field: "planned" | "actual" | "status", value: string) {
@@ -234,7 +236,7 @@ export function CheckInView({ userId }: { userId: string }) {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Check-In</h1>
-        <p className="text-gray-600">Track what you're doing right now</p>
+        <p className="text-gray-600">Track what you&apos;re doing right now</p>
       </div>
 
       {/* Current Time */}

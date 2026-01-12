@@ -1,0 +1,17 @@
+{
+  "name": "Daily Ops Planner",
+  "short_name": "Daily Ops",
+  "description": "Local-first daily planning system with structured execution",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
+

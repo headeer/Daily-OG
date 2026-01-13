@@ -10,3 +10,4 @@ export const config = {
   matcher: ["/today/:path*", "/checkin/:path*", "/history/:path*", "/settings/:path*"],
 };
 
+

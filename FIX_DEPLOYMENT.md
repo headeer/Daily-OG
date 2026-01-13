@@ -83,3 +83,4 @@ If this works locally, the same URL should work in Vercel.
 - Connection poolers are designed for serverless environments like Vercel
 - Migrations during build can fail if database isn't accessible or firewall blocks connections
 
+

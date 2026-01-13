@@ -18,3 +18,4 @@ export function generateHalfHourBlocks(wakeTimeHHmm: string, dayLengthHours = 15
   return blocks;
 }
 
+

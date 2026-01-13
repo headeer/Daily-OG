@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { computeCurrentBlock, requestNotificationPermission, startHalfHourNotifier } from "@/lib/reminders";
-import { getDayEntry, updateTimeBlock, updateDayEntry } from "@/app/actions/day";
+import { getDayEntry, updateTimeBlock, updateDayEntry, bulkUpdateTimeBlocks } from "@/app/actions/day";
 import { usePageTitle } from "./PageTitle";
 
 interface TimeBlock {
@@ -162,14 +162,12 @@ export function CheckInView({ userId }: { userId: string }) {
       return endMinutes < nowMinutes;
     });
     
-    // Sort by time descending (most recent first) and take last 5
-    return previousBlocks
-      .sort((a, b) => {
-        const [aH, aM] = a.endTime.split(":").map(Number);
-        const [bH, bM] = b.endTime.split(":").map(Number);
-        return (bH * 60 + bM) - (aH * 60 + aM);
-      })
-      .slice(0, 5);
+    // Sort by time descending (most recent first) - show ALL previous blocks
+    return previousBlocks.sort((a, b) => {
+      const [aH, aM] = a.endTime.split(":").map(Number);
+      const [bH, bM] = b.endTime.split(":").map(Number);
+      return (bH * 60 + bM) - (aH * 60 + aM);
+    });
   }
 
   function getUnfulfilledCount(): number {
@@ -221,6 +219,61 @@ export function CheckInView({ userId }: { userId: string }) {
     );
     setDayEntry({ ...dayEntry, timeBlocks: updatedBlocks });
     setEditingPreviousBlock(null);
+  }
+
+  async function handleFillTodayBlocks() {
+    if (!dayEntry) return;
+    
+    const updates = [
+      { startTime: "07:00", endTime: "07:30", actual: "Woke up, driving nephew to school", status: "done" },
+      { startTime: "07:30", endTime: "08:00", actual: "Driving nephew to school", status: "done" },
+      { startTime: "08:00", endTime: "08:30", actual: "In the shop, came back, prepared meal", status: "done" },
+      { startTime: "08:30", endTime: "09:00", actual: "Working on mobile and design, watching YouTube", status: "done" },
+      { startTime: "09:00", endTime: "10:00", actual: "Meeting", status: "done" },
+      { startTime: "10:00", endTime: "10:30", actual: "Eating breakfast", status: "done" },
+      { startTime: "10:30", endTime: "11:00", actual: "Meeting continued", status: "done" },
+      { startTime: "11:00", endTime: "11:30", actual: "Watching YouTube, helping mom with curtains", status: "done" },
+      { startTime: "11:30", endTime: "12:00", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "12:00", endTime: "12:30", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "12:30", endTime: "13:00", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "13:00", endTime: "13:30", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "13:30", endTime: "14:00", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "14:00", endTime: "14:30", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "14:30", endTime: "15:00", actual: "Working on mobile, watching YouTube, eating, hanging curtains", status: "done" },
+      { startTime: "15:00", endTime: "15:30", actual: "Meeting with client, closed the deal", status: "done" },
+      { startTime: "15:30", endTime: "16:00", actual: "Planning workout, working on mobile design, listening", status: "in_progress" },
+    ];
+
+    const blockUpdates = updates
+      .map(update => {
+        const block = dayEntry.timeBlocks.find(b => b.startTime === update.startTime && b.endTime === update.endTime);
+        if (!block) return null;
+        return {
+          timeBlockId: block.id,
+          actual: update.actual,
+          status: update.status,
+        };
+      })
+      .filter((u): u is { timeBlockId: string; actual: string; status: string } => u !== null);
+
+    if (blockUpdates.length === 0) {
+      alert("No matching blocks found. Make sure your wake time is 7:00 AM.");
+      return;
+    }
+
+    try {
+      await bulkUpdateTimeBlocks({
+        userId,
+        updates: blockUpdates,
+      });
+      
+      // Reload to show updated data
+      await loadToday();
+      alert(`Successfully filled ${blockUpdates.length} time blocks!`);
+    } catch (error) {
+      console.error("Failed to fill blocks:", error);
+      alert(`Failed to fill blocks: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
   }
 
   if (!dayEntry) {
@@ -336,13 +389,31 @@ export function CheckInView({ userId }: { userId: string }) {
         </div>
       )}
 
+      {/* Fill Today Button - Only show for today */}
+      {getPreviousBlocks().length > 0 && format(new Date(), "yyyy-MM-dd") === dayEntry.date && (
+        <div className="card bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Quick Fill Today</h2>
+              <p className="text-sm text-gray-600 mt-1">Fill all today&apos;s blocks based on your schedule</p>
+            </div>
+            <button
+              onClick={handleFillTodayBlocks}
+              className="btn-primary px-6 py-2 font-semibold"
+            >
+              Fill All Today
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Previous Blocks */}
       {getPreviousBlocks().length > 0 && (
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Fill Previous Blocks</h2>
-              <p className="text-sm text-gray-600 mt-1">Update past time blocks you may have missed</p>
+              <p className="text-sm text-gray-600 mt-1">Update past time blocks you may have missed ({getPreviousBlocks().length} blocks)</p>
             </div>
             {unfulfilledCount > 0 && (
               <span className="badge badge-warning text-sm font-bold">
@@ -489,6 +560,11 @@ export function CheckInView({ userId }: { userId: string }) {
               );
             })}
           </div>
+          {getPreviousBlocks().length > 10 && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              Showing all {getPreviousBlocks().length} previous blocks. Scroll to see more.
+            </div>
+          )}
         </div>
       )}
 

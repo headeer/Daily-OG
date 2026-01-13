@@ -67,10 +67,30 @@ export function TodayView({ userId }: { userId: string }) {
   usePageTitle(unfulfilledCount);
 
   function parseDayEntry(entry: any): DayEntry {
+    if (!entry) {
+      throw new Error("Entry is null or undefined");
+    }
+    
+    // Ensure topTasks is always an array
+    let topTasks = entry.topTasks;
+    if (!topTasks || !Array.isArray(topTasks)) {
+      if (typeof topTasks === 'string') {
+        try {
+          topTasks = JSON.parse(topTasks);
+        } catch {
+          topTasks = [];
+        }
+      } else {
+        topTasks = [];
+      }
+    }
+    
     return {
       ...entry,
-      topTasks: entry.topTasks || [],
+      topTasks,
       endOfDay: entry.endOfDay || null,
+      distractions: entry.distractions || "",
+      improvements: entry.improvements || "",
     };
   }
 
@@ -81,9 +101,14 @@ export function TodayView({ userId }: { userId: string }) {
         userId,
         date: selectedDate,
       });
+      if (!entry) {
+        throw new Error("Failed to load day entry");
+      }
       setDayEntry(parseDayEntry(entry));
     } catch (error) {
       console.error("Failed to load day:", error);
+      // Show user-friendly error
+      alert(`Failed to load day: ${error instanceof Error ? error.message : "Unknown error"}. Please refresh the page.`);
     } finally {
       setLoading(false);
     }
